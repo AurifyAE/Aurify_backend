@@ -23,7 +23,11 @@ import {
 } from '../../controllers/Admin/adminController.js';
 
 import { createShopItem, fetchShopItems, editShopItem, removeShopItem } from "../../controllers/admin/shopController.js";
-import { uploadSingle } from "../../middleware/multer.js"; // Import the uploadSingle middleware
+// import express from 'express';
+// import imageHandler from "../../middleware/imageHandler.js";
+// import path from "path";
+import { uploadSingle } from "../../middleware/multer.js";
+
 
 const router = Router()
 
@@ -47,11 +51,10 @@ router.get('/admin/:adminId/spread-values', fetchSpreadValues);
 router.delete('/admin/spread-values/:spreadValueId', deleteSpreadValueController);
 
 //Shop-router
-router.post('/shop-items', uploadSingle('image'), createShopItem);
+router.post('/shop-items', uploadSingle("image"), createShopItem);
 router.get('/shop-items', fetchShopItems);
-router.patch('/shop-items/:id', uploadSingle('image'), editShopItem); // Add file upload support to edit as well
+router.patch('/shop-items/:id', uploadSingle("image"), editShopItem); // Add file upload support to edit as well
 router.delete('/shop-items/:id', removeShopItem);
-
 
 
 export default router

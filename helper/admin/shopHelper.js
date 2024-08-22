@@ -48,25 +48,62 @@ export const getAllShopItems = async (email) => {
 };
 
 // Update a shop item
+// export const updateShopItem = async (email, shopItemId, updatedData) => {
+//     try {
+//         console.log("Email:", email);
+//         console.log("ShopItemId:", shopItemId);
+//         console.log("UpdatedData:", updatedData);
+//         const admin = await adminModel.findOne({ email });
+//         if (!admin) {
+//             throw createAppError("Admin not found.", 404);
+//         }
+
+
+//         const result = await shopModel.findOneAndUpdate(
+//             { createdBy: admin._id, "shops._id": shopItemId },
+//             {
+//                 $set: {
+//                     "shops.$.name": updatedData.name,
+//                     "shops.$.type": updatedData.type,
+//                     "shops.$.weight": updatedData.weight,
+//                     "shops.$.rate": updatedData.rate,
+//                     "shops.$.image": updatedData.image,
+//                 }
+//             },
+//             { new: true }
+//         );
+
+//         if (!result) {
+//             throw createAppError("Shop item not found or update failed.", 404);
+//         }
+
+//         return result;
+//     } catch (error) {
+//         console.error("Detailed error in helper:", error);
+
+//         throw createAppError("Error updating shop item: " + error.message, 500);
+//     }
+// };
+
 export const updateShopItem = async (email, shopItemId, updatedData) => {
     try {
+        console.log("Email:", email);
+        console.log("ShopItemId:", shopItemId);
+        console.log("UpdatedData:", updatedData);
+
         const admin = await adminModel.findOne({ email });
         if (!admin) {
             throw createAppError("Admin not found.", 404);
         }
 
+        const updateObject = {};
+        Object.keys(updatedData).forEach(key => {
+            updateObject[`shops.$.${key}`] = updatedData[key];
+        });
 
         const result = await shopModel.findOneAndUpdate(
             { createdBy: admin._id, "shops._id": shopItemId },
-            {
-                $set: {
-                    "shops.$.name": updatedData.name,
-                    "shops.$.type": updatedData.type,
-                    "shops.$.weight": updatedData.weight,
-                    "shops.$.rate": updatedData.rate,
-                    "shops.$.image": updatedData.image,
-                }
-            },
+            { $set: updateObject },
             { new: true }
         );
 
@@ -76,6 +113,7 @@ export const updateShopItem = async (email, shopItemId, updatedData) => {
 
         return result;
     } catch (error) {
+        console.error("Detailed error in helper:", error);
         throw createAppError("Error updating shop item: " + error.message, 500);
     }
 };
