@@ -19,17 +19,20 @@ app.use(express.urlencoded({ extended: true }));
 //cors connecting
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:5173","http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   })
 );
+
 
 //database connecting
 mongodb();
 
 app.use("/api", adminRouter);
 app.use("/admin", superRouter);
+
+
 
 // Global error handling middleware
 app.use(errorHandler);

@@ -21,25 +21,22 @@ const storage = sharpMulter({
   }
 });
 
-// File filter to validate image files
 const fileFilter = (req, file, cb) => {
-  const fileTypes = ['jpeg', 'jpg', 'png', 'gif'];
-  const extname = file.originalname.split('.').pop().toLowerCase();
-  const mimeType = file.mimetype.split('/').pop().toLowerCase();
+  const allowedFileTypes = /jpeg|jpg|png|gif/;
+  const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedFileTypes.test(file.mimetype);
 
-  if (fileTypes.includes(extname) && fileTypes.includes(mimeType)) {
+  if (extname && mimetype) {
     return cb(null, true);
   } else {
     cb(new Error('Error: Only images are allowed (jpeg, jpg, png, gif)!'));
   }
 };
 
-// Initialize the upload middleware with file size limit and validation
 const upload = multer({
   storage: storage,
   limits: { fileSize: 30 * 1024 * 1024 }, // Limit file size to 30MB
   fileFilter: fileFilter
 });
 
-// Export the middleware for single file uploads
 export const uploadSingle = (fieldName) => upload.single(fieldName);

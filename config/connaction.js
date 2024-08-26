@@ -13,4 +13,4 @@ const mongodb = async () => {
 
     }
 }
-export { mongodb }
+export {mongodb}
