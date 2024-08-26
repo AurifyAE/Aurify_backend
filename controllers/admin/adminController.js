@@ -1,5 +1,5 @@
 import {
-  userVerfication,
+  adminVerfication,
   getUsersForAdmin,
   addSpreadValue,
   getSpreadValues,
@@ -8,11 +8,14 @@ import {
 import { createAppError } from "../../utils/errorHandler.js";
 import bcrypt from "bcrypt";
 import adminModel from "../../model/adminSchema.js";
+import jwt from "jsonwebtoken";
+import { generateToken } from "../../utils/jwt.js";
+// const SECRET_KEY = 'aurify@JWT';
 
-export const userLoginController = async (req, res, next) => { // Include next here
+export const adminLoginController = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    const authLogin = await userVerfication(email);
+    const { email, password, rememberMe } = req.body;
+    const authLogin = await adminVerfication(email);
 
     if (authLogin) {
       const encryptPassword = authLogin.password;
@@ -21,16 +24,65 @@ export const userLoginController = async (req, res, next) => { // Include next h
       if (!matchPassword) {
         throw createAppError("Incorrect password.", 401);
       }
+      // await addFCMToken(email, fcmToken);
+      const expiresIn = rememberMe ? "30d" : "3d";
+      const token = generateToken({ adminId: authLogin._id }, expiresIn);
 
       res.status(200).json({
         success: true,
         message: "Authentication successful.",
+        token,
       });
     } else {
       throw createAppError("User not found.", 404);
     }
   } catch (error) {
-    next(error); // Pass the error to the global error handler
+    next(error);
+  }
+};
+
+export const adminTokenVerificationApi = async (req, res, next) => {
+  try {
+    const token = req.body.token;
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication token is missing' });
+    }
+
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+
+    // Fetch admin data using the decoded adminId
+    const admin = await adminModel.findById(decoded.adminId);
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    const currentDate = new Date();
+    const serviceEndDate = new Date(admin.serviceEndDate);
+
+    if (serviceEndDate < currentDate) {
+      // If service has expired
+      return res.status(403).json({
+        message: 'Your service has ended. Please renew to continue using the system.',
+        serviceExpired: true
+      });
+    }
+
+    // If the token is valid and service is active
+    res.status(200).json({
+      admin: {
+        adminId: admin._id,
+        serviceEndDate: admin.serviceEndDate,
+      },
+      serviceExpired: false
+    });
+
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token has expired', tokenExpired: true });
+    } else if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token', tokenInvalid: true });
+    }
+    next(error);
   }
 };
 
@@ -62,7 +114,7 @@ export const getAdminDataController = async (req, res, next) => {
 export const saveBankDetailsController = async (req, res, next) => {
   try {
     const { email, bankDetails } = req.body;
-    console.log('haaaai', bankDetails);
+    // console.log('haaaai', bankDetails);
     if (!email || !bankDetails) {
       return res.status(400).json({ success: false, message: "Email and bank details are required." });
     }

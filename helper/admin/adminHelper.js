@@ -1,14 +1,20 @@
 import adminModel from "../../model/adminSchema.js";
 import { SpreadValueModel } from "../../model/spreadValueSchema.js";
 import { UsersModel } from "../../model/userSchema.js";
+import bcrypt from "bcrypt";
 
-export const userVerfication = async (email) => {
+// Function to hash the password
+const hashPassword = async (password) => {
   try {
-    const user = await adminModel.findOne({ email });
-    if (!user) {
-      return null;
-    }
-    return user;
+    return await bcrypt.hash(password, 10);
+  } catch (error) {
+    throw new Error("Error hashing password");
+  }
+};
+export const adminVerfication = async (email) => {
+  try {
+    return await adminModel.findOne({ email });
+
   } catch (error) {
     console.error("Error in userVerfication:", error.message);
     throw new Error("Verification failed: " + error.message);

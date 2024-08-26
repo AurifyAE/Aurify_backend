@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-    userLoginController,
+    adminLoginController,
     saveBankDetailsController,
     getAdminDataController,
     updateBankDetailsController,
@@ -31,7 +31,7 @@ import { uploadSingle } from "../../middleware/multer.js";
 
 const router = Router()
 
-router.post('/login', userLoginController)
+router.post('/login', adminLoginController)
 router.post('/save-bank-details', saveBankDetailsController);
 router.get('/data', getAdminDataController);
 router.delete('/delete-bank-details', deleteBankDetailsController);
