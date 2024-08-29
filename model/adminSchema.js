@@ -6,9 +6,11 @@ const adminSchema = new mongoose.Schema({
   address: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  passwordAccessKey: { type: String, required: true },
   contact: { type: String, required: true },
   whatsapp: { type: String, required: true },
   userType: { type: String, required: true },
+  screenLimit: { type: Number, required: true },
   solutions: [
     {
       type: { type: String, required: true },
@@ -57,8 +59,7 @@ const adminSchema = new mongoose.Schema({
       logo: { type: String },
     },
   ],
-},
-);
+});
 
 const adminModel = mongoose.model("Admin", adminSchema);
 export default adminModel;

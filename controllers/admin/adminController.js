@@ -1,40 +1,45 @@
-import {
-  getUsersForAdmin,
-  addSpreadValue,
-  getSpreadValues,
-  deleteSpreadValue,
-} from "../../helper/admin/adminHelper.js";
-import { createAppError } from "../../utils/errorHandler.js";
-import bcrypt from "bcrypt";
-import { getUserData } from "../../helper/admin/adminHelper.js";
-import { updateUserData } from "../../helper/admin/adminHelper.js";
-import { updateUserLogo } from "../../helper/admin/adminHelper.js";
-import { spotRateModel } from "../../model/spotRateSchema.js";
-import { getCommodity } from "../../helper/admin/adminHelper.js";
-import { getMetals } from "../../helper/admin/adminHelper.js"
-import { fetchNotification, addFCMToken, updateNotification } from "../../helper/admin/adminHelper.js";
-import adminModel from "../../model/adminSchema.js";
-import { adminVerfication } from "../../helper/admin/adminHelper.js";
-import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import {
+  addFCMToken,
+  addSpreadValue,
+  adminVerfication,
+  deleteSpreadValue,
+  fetchNotification,
+  getCommodity,
+  getMetals,
+  getSpreadValues,
+  getUserData,
+  getUsersForAdmin,
+  updateNotification,
+  updateUserData,
+  updateUserLogo,
+} from "../../helper/admin/adminHelper.js";
+import adminModel from "../../model/adminSchema.js";
+import { spotRateModel } from "../../model/spotRateSchema.js";
+import { decryptPassword } from "../../utils/crypto.js";
+import { createAppError } from "../../utils/errorHandler.js";
 import { generateToken } from "../../utils/jwt.js";
-import { userCollectionSave } from "../../helper/superAdmin/superHelper.js";
-// const SECRET_KEY = 'aurify@JWT';
 
 export const adminLoginController = async (req, res, next) => {
   try {
     const { email, password, fcmToken, rememberMe } = req.body;
+
     const authLogin = await adminVerfication(email);
 
     if (authLogin) {
-      const encryptPassword = authLogin.password;
-      const matchPassword = await bcrypt.compare(password, encryptPassword);
-
-      if (!matchPassword) {
+      const decryptedPassword = decryptPassword(
+        authLogin.password,
+        authLogin.passwordAccessKey
+      );
+      if (password !== decryptedPassword) {
         throw createAppError("Incorrect password.", 401);
       }
+
       await addFCMToken(email, fcmToken);
+
       const expiresIn = rememberMe ? "30d" : "3d";
+
       const token = generateToken({ adminId: authLogin._id }, expiresIn);
 
       res.status(200).json({
@@ -50,12 +55,13 @@ export const adminLoginController = async (req, res, next) => {
   }
 };
 
-
 export const adminTokenVerificationApi = async (req, res, next) => {
   try {
     const token = req.body.token;
     if (!token) {
-      return res.status(401).json({ message: 'Authentication token is missing' });
+      return res
+        .status(401)
+        .json({ message: "Authentication token is missing" });
     }
 
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
@@ -63,7 +69,7 @@ export const adminTokenVerificationApi = async (req, res, next) => {
     // Fetch admin data using the decoded adminId
     const admin = await adminModel.findById(decoded.adminId);
     if (!admin) {
-      return res.status(404).json({ message: 'Admin not found' });
+      return res.status(404).json({ message: "Admin not found" });
     }
 
     const currentDate = new Date();
@@ -72,8 +78,9 @@ export const adminTokenVerificationApi = async (req, res, next) => {
     if (serviceEndDate < currentDate) {
       // If service has expired
       return res.status(403).json({
-        message: 'Your service has ended. Please renew to continue using the system.',
-        serviceExpired: true
+        message:
+          "Your service has ended. Please renew to continue using the system.",
+        serviceExpired: true,
       });
     }
 
@@ -83,71 +90,26 @@ export const adminTokenVerificationApi = async (req, res, next) => {
         adminId: admin._id,
         serviceEndDate: admin.serviceEndDate,
       },
-      serviceExpired: false
+      serviceExpired: false,
     });
-
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Token has expired', tokenExpired: true });
-    } else if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ message: 'Invalid token', tokenInvalid: true });
+    if (error.name === "TokenExpiredError") {
+      return res
+        .status(401)
+        .json({ message: "Token has expired", tokenExpired: true });
+    } else if (error.name === "JsonWebTokenError") {
+      return res
+        .status(401)
+        .json({ message: "Invalid token", tokenInvalid: true });
     }
     next(error);
   }
 };
 
-
-export const registerUser = async (req, res, next) => {
-  try {
-    const { userName, contact, location, email, password } = req.body;
-    const { adminId } = req.params;
-    const data = {
-      userName,
-      contact,
-      location,
-      email,
-      password,
-    };
-    console.log(data)
-    // const response = await userCollectionSave(data, adminId);
-    // res
-    //   .status(200)
-    //   .json({ message: response.message, success: response.success });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const userLoginController = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-    const { adminId } = req.params;
-    const response = await adminVerfication(adminId, email, password);
-    res
-      .status(200)
-      .json({ message: response.message, success: response.success });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// export const updateSpread = async (req, res, next) => {
-//   try {
-//     const { adminId, userId } = req.params;
-//     const { spread } = req.body;
-//     const response = await userUpdateSpread(adminId, userId, spread);
-//     res
-//       .status(200)
-//       .json({ message: response.message, success: response.success });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 export const deleteNotification = async (req, res, next) => {
   try {
-    const { userId, notificationId } = req.params;
-    const response = await updateNotification(userId, notificationId);
+    const { adminId, notificationId } = req.params;
+    const response = await updateNotification(adminId, notificationId);
     res
       .status(200)
       .json({ message: response.message, success: response.success });
@@ -240,10 +202,10 @@ export const updateLogo = async (req, res) => {
 };
 
 export const updateSpread = async (req, res) => {
-  const { userId, metal, type, value } = req.body;
+  const { adminId, metal, type, value } = req.body;
 
   try {
-    const createdBy = new mongoose.Types.ObjectId(userId);
+    const createdBy = new mongoose.Types.ObjectId(adminId);
     let spotRate = await spotRateModel.findOne({ createdBy });
 
     if (!spotRate) {
@@ -255,12 +217,14 @@ export const updateSpread = async (req, res) => {
 
     // Update the appropriate field based on metal and type
     let fieldName;
-    if (type === 'bid' || type === 'ask') {
-      fieldName = `${metal.toLowerCase()}${type.charAt(0).toUpperCase() + type.slice(1)}Spread`;
-    } else if (type === 'low' || type === 'high') {
-      fieldName = `${metal.toLowerCase()}${type.charAt(0).toUpperCase() + type.slice(1)}Margin`;
+    if (type === "bid" || type === "ask") {
+      fieldName = `${metal.toLowerCase()}${type.charAt(0).toUpperCase() + type.slice(1)
+        }Spread`;
+    } else if (type === "low" || type === "high") {
+      fieldName = `${metal.toLowerCase()}${type.charAt(0).toUpperCase() + type.slice(1)
+        }Margin`;
     } else {
-      return res.status(400).json({ message: 'Invalid type specified' });
+      return res.status(400).json({ message: "Invalid type specified" });
     }
     const updateObj = { [fieldName]: value };
     const updatedSpotRate = await spotRateModel.findOneAndUpdate(
@@ -327,55 +291,52 @@ export const getSpotRate = async (req, res, next) => {
 
 export const createCommodity = async (req, res, next) => {
   try {
-    const { userId, commodity } = req.body;
-    const createdBy = new mongoose.Types.ObjectId(userId);
-    const spotrate = await spotRateModel.findOne({ createdBy });
+    const { adminId, commodity } = req.body;
+    const createdBy = new mongoose.Types.ObjectId(adminId);
+    let spotrate = await spotRateModel.findOne({ createdBy });
 
     if (!spotrate) {
-      return res
-        .status(404)
-        .json({ message: "Spotrate not found for this user" });
+      // If no document exists for this user, create a new one
+      spotrate = new spotRateModel({
+        createdBy,
+      });
     }
     spotrate.commodities.push(commodity);
     const updatedSpotrate = await spotrate.save();
-    res
-      .status(200)
-      .json({
-        message: "Commodity created successfully",
-        data: updatedSpotrate,
-      });
+    res.status(200).json({ message: 'Commodity created successfully', data: updatedSpotrate });
   } catch (error) {
-    console.error("Error creating commodity:", error);
-    res
-      .status(500)
-      .json({ message: "Error creating commodity", error: error.message });
+    console.error('Error creating commodity:', error);
+    res.status(500).json({ message: 'Error creating commodity', error: error.message });
   }
 };
 
 export const getSpotRateCommodity = async (req, res, next) => {
   try {
-    const userId = req.params;
-    if (!userId) {
-      throw createAppError("email parameter is required.", 400);
+    const adminId = req.params.adminId; // Correctly extract adminId
+    console.log(adminId);
+
+    if (!adminId) {
+      throw createAppError("adminId parameter is required.", 400); // Correct the error message
     }
 
-    const spotRateCommodity = await spotRateModel.findOne({
-      createdBy: userId,
-    });
+    const createdBy = new mongoose.Types.ObjectId(adminId);
+    const spotRateCommodity = await spotRateModel.findOne({ createdBy });
+    console.log(spotRateCommodity);
 
     if (!spotRateCommodity) {
-      throw createAppError("data not found.", 404);
+      throw createAppError("Data not found.", 404);
     }
 
     res.status(200).json({
       success: true,
-      data: adminData,
+      data: spotRateCommodity,
     });
   } catch (error) {
-    console.log("Error:", error.message);
+    console.log('Error:', error.message);
     next(error); // Pass the error to the global error handler
   }
 };
+
 
 export const getMetalCommodity = async (req, res, next) => {
   try {
@@ -402,13 +363,13 @@ export const getMetalCommodity = async (req, res, next) => {
 
 export const getNotification = async (req, res, next) => {
   try {
-    const { userId } = req.params;
+    const { adminId } = req.params;
 
-    if (!userId) {
+    if (!adminId) {
       throw createAppError("User ID is required.", 400);
     }
 
-    const response = await fetchNotification(userId);
+    const response = await fetchNotification(adminId);
 
     res.status(200).json({
       message: response.message,
@@ -425,12 +386,10 @@ export const saveBankDetailsController = async (req, res, next) => {
   try {
     const { email, bankDetails } = req.body;
     if (!email || !bankDetails) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Email and bank details are required.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Email and bank details are required.",
+      });
     }
 
     const admin = await adminModel.findOne({ email });
@@ -446,10 +405,7 @@ export const saveBankDetailsController = async (req, res, next) => {
 
     // // Save the updated admin document
     // await admin.save();
-    await adminModel.updateOne(
-      { email },
-      { $push: { bankDetails } }
-    );
+    await adminModel.updateOne({ email }, { $push: { bankDetails } });
 
     res.status(200).json({
       success: true,
@@ -468,12 +424,10 @@ export const updateBankDetailsController = async (req, res, next) => {
     const { email, bankDetails } = req.body;
 
     if (!email || !bankDetails) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Email and bank details are required.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Email and bank details are required.",
+      });
     }
 
     // Directly update the bank details using the account number
@@ -509,15 +463,18 @@ export const updateBankDetailsController = async (req, res, next) => {
     // Save the updated admin document
     await admin.save();
 
-
     if (!updatedAdmin) {
-      return res.status(404).json({ success: false, message: "Admin or bank details not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Admin or bank details not found." });
     }
 
     res.status(200).json({
       success: true,
       message: "Bank details updated successfully",
-      data: updatedAdmin.bankDetails.find(b => b.accountNumber === bankDetails.accountNumber)
+      data: updatedAdmin.bankDetails.find(
+        (b) => b.accountNumber === bankDetails.accountNumber
+      ),
     });
   } catch (error) {
     console.error("Error updating bank details:", error.message);
@@ -525,20 +482,16 @@ export const updateBankDetailsController = async (req, res, next) => {
   }
 };
 
-
-
 // Delete bank details
 export const deleteBankDetailsController = async (req, res, next) => {
   try {
     const { email, accountNumber } = req.body;
 
     if (!email || !accountNumber) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Email and account number are required.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Email and account number are required.",
+      });
     }
 
     // Attempt to remove the bank detail
@@ -548,22 +501,22 @@ export const deleteBankDetailsController = async (req, res, next) => {
     );
 
     if (result.modifiedCount === 0) {
-      return res.status(404).json({ success: false, message: "Admin or bank detail not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Admin or bank detail not found." });
     }
 
     res.status(200).json({
       success: true,
-      message: "Bank detail deleted successfully."
+      message: "Bank detail deleted successfully.",
     });
   } catch (error) {
-    console.error('Error deleting bank detail:', error.message);
+    console.error("Error deleting bank detail:", error.message);
     next(error);
   }
 };
 
-
-
-//Sidebar Features 
+//Sidebar Features
 export const getAdminFeaturesController = async (req, res, next) => {
   try {
     const { email } = req.query; // Using query parameter for consistency with your frontend

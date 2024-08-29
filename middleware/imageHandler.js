@@ -29,7 +29,6 @@ export default (req, res, next) => {
             const filename = `${Date.now()}${path.extname(req.file.originalname)}`;
             const saveTo = path.resolve(import.meta.dirname, "public", "images");
             const filePath = path.join(saveTo, filename);
-            console.log(req.file);
             await sharp(req.file.path)
                 // .resize({ width: 300, height: 300 })
                 .webp({ quality: 80 })

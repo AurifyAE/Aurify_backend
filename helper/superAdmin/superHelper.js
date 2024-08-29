@@ -1,5 +1,6 @@
 import adminModel from "../../model/adminSchema.js";
 import bcrypt from "bcrypt";
+import { decryptPassword, encryptPassword } from "../../utils/crypto.js";
 
 // Function to hash the password
 const hashPassword = async (password) => {
@@ -21,12 +22,12 @@ export const userCollectionSave = async (userData) => {
       contact,
       whatsapp,
       userType,
+      screenCount,
       solutions = [],
       features = [],
       commodities = [],
       workCompletionDate,
       serviceStartDate,
-      fcmToken, // Expecting the FCM token to be passed from the frontend
     } = userData;
 
     
@@ -59,16 +60,20 @@ export const userCollectionSave = async (userData) => {
       symbol: commodity,
     }));
 
-    const encrypt = await hashPassword(password);
+    // const encrypt = await hashPassword(password);
+    const { iv, encryptedData } = encryptPassword(password);
+
     const authCollection = new adminModel({
       userName,
       logo,
       address,
       email,
-      password: encrypt,
+      password: encryptedData,
+      passwordAccessKey:iv,
       contact,
       whatsapp,
       userType,
+      screenLimit:screenCount,
       solutions: formattedSolutions,
       features: formattedFeatures,
       commodities: formattedCommodities,
