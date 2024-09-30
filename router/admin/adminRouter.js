@@ -83,10 +83,6 @@ import {
   getUsers,
 } from "../../controllers/admin/usersController.js";
 import { getUserData } from "../../helper/admin/adminHelper.js";
-import {
-  validateContact,
-  validateFeatureRequest,
-} from "../../middleware/validators.js";
 
 const router = Router();
 
@@ -182,5 +178,17 @@ router.get("/backgrounds/:userId", getBackground);
 //premium and discount router
 router.post("/premiumdiscounts/:userId", premiumDiscounts);
 router.get("/premiumdiscounts/:userId", getPremiumDiscounts);
+
+//category routers
+router.post("/addCategory/:adminId", addCategory);
+router.put("/editCategory/:id/:adminId", editCategory);
+router.delete("/deleteCategory/:id/:adminId", deleteCategory);
+router.get("/getCategories/:adminId", getCategories);
+
+//user router
+router.post("/admin/:adminId/users", addUser);
+router.put("/admin/users/:userId/:adminId", editUser);
+router.delete("/admin/users/:userId/:adminId", deleteUser);
+router.get("/admin/:adminId/users", getUsers);
 
 export default router;
