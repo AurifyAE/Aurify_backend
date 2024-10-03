@@ -23,11 +23,12 @@ const UsersSchema = new mongoose.Schema({
       category: {
         type: String,
         required: true,
-      category: { 
-        type: String, 
-        required: true, 
       },
       password: {
+        type: String,
+        required: true,
+      },
+      passwordAccessKey: {
         type: String,
         required: true,
       },
@@ -42,8 +43,5 @@ const UsersSchema = new mongoose.Schema({
 // Check if the model already exists before creating it
 const UsersModel =
   mongoose.models.Users || mongoose.model("Users", UsersSchema);
-
-// Check if the model already exists before creating it
-const UsersModel = mongoose.models.Users || mongoose.model("Users", UsersSchema);
 
 export { UsersModel };

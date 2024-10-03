@@ -17,7 +17,6 @@ import {
 import {
   adminTokenVerificationApi,
   fetchAdminDevice,
-  fetchUsersForAdmin,
 } from "../../controllers/admin/adminController.js";
 
 import {
@@ -81,8 +80,12 @@ import {
   deleteUser,
   editUser,
   getUsers,
-} from "../../controllers/admin/usersController.js";
+} from "../../controllers/admin/userController.js";
 import { getUserData } from "../../helper/admin/adminHelper.js";
+import {
+  validateContact,
+  validateFeatureRequest,
+} from "../../middleware/validators.js";
 
 const router = Router();
 
@@ -138,7 +141,6 @@ router.delete(
 );
 
 //user router
-router.get("/admin/:adminId/users", fetchUsersForAdmin);
 router.get("/admin/:adminId/device", fetchAdminDevice);
 router.post("/admin/:adminId/spread-values", addCustomSpread);
 router.get("/admin/:adminId/spread-values", fetchSpreadValues);
@@ -146,16 +148,6 @@ router.delete(
   "/admin/spread-values/:spreadValueId/:userName",
   deleteSpreadValueController
 );
-// category router
-router.post("/addCategory/:adminId", addCategory);
-router.put("/editCategory/:id/:adminId", editCategory);
-router.delete("/deleteCategory/:id/:adminId", deleteCategory);
-router.get("/getCategories/:adminId", getCategories);
-//user router
-router.post("/admin/:adminId/users", addUser);
-router.put("/admin/users/:userId/:adminId", editUser);
-router.delete("/admin/users/:userId/:adminId", deleteUser);
-router.get("/admin/:adminId/users", getUsers);
 
 //shop router
 router.post("/shop-items/:userName", uploadSingle("image"), createShopItem);
