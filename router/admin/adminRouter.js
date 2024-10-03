@@ -81,11 +81,13 @@ import {
   editUser,
   getUsers,
 } from "../../controllers/admin/userController.js";
-import { getUserData } from "../../helper/admin/adminHelper.js";
 import {
-  validateContact,
-  validateFeatureRequest,
-} from "../../middleware/validators.js";
+  addUserCommodity,
+  deleteUserCommodity,
+  getUserCommodity,
+  updateUserSpread,
+} from "../../controllers/admin/UserSpotRateController.js";
+import { getUserData } from "../../helper/admin/adminHelper.js";
 
 const router = Router();
 
@@ -182,5 +184,14 @@ router.post("/admin/:adminId/users", addUser);
 router.put("/admin/users/:userId/:adminId", editUser);
 router.delete("/admin/users/:userId/:adminId", deleteUser);
 router.get("/admin/:adminId/users", getUsers);
+
+//user spotrate router
+router.get("/spotrates/:adminId/:categoryId", getUserCommodity);
+router.post("/update-user-spread", updateUserSpread);
+router.post("/commodities/:adminId/:categoryId", addUserCommodity);
+router.delete(
+  "/commodities/:adminId/:categoryId/:commodityId",
+  deleteUserCommodity
+);
 
 export default router;
