@@ -85,9 +85,14 @@ import {
   addUserCommodity,
   deleteUserCommodity,
   getUserCommodity,
+  updateUserCommodity,
   updateUserSpread,
 } from "../../controllers/admin/UserSpotRateController.js";
 import { getUserData } from "../../helper/admin/adminHelper.js";
+import {
+  validateContact,
+  validateFeatureRequest,
+} from "../../middleware/validators.js";
 
 const router = Router();
 
@@ -192,6 +197,10 @@ router.post("/commodities/:adminId/:categoryId", addUserCommodity);
 router.delete(
   "/commodities/:adminId/:categoryId/:commodityId",
   deleteUserCommodity
+);
+router.patch(
+  "/spotrate-commodity/:adminId/:categoryId/:commodityId",
+  updateUserCommodity
 );
 
 export default router;
