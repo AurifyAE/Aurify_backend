@@ -121,11 +121,7 @@ router.put("/update-bank-details", updateBankDetailsController);
 
 //features
 router.get("/features", getAdminFeaturesController);
-router.post(
-  "/request-feature",
-  validateFeatureRequest,
-  sendFeatureRequestEmail
-);
+router.post("/request-feature", sendFeatureRequestEmail);
 
 //banner
 router.get("/banners/:adminId", getBanner);
@@ -159,7 +155,7 @@ router.patch("/shop-items/:id", uploadSingle("image"), editShopItem);
 router.delete("/shop-items/:id", removeShopItem);
 
 //contact router
-router.post("/contact", validateContact, sendContactEmail);
+router.post("/contact", sendContactEmail);
 router.get("/user-data", getUserData);
 
 //messages router
