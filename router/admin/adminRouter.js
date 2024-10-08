@@ -89,10 +89,6 @@ import {
   updateUserSpread,
 } from "../../controllers/admin/UserSpotRateController.js";
 import { getUserData } from "../../helper/admin/adminHelper.js";
-import {
-  validateContact,
-  validateFeatureRequest,
-} from "../../middleware/validators.js";
 
 const router = Router();
 

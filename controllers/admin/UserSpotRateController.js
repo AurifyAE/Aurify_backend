@@ -9,7 +9,7 @@ export const getUserCommodity = async (req, res, next) => {
     });
 
     if (!userSpotRate) {
-      return res.status(404).json({ message: "User spot rate not found" });
+      return res.status(204).json({ message: "User spot rate not found" });
     }
 
     const category = userSpotRate.categories.find(
@@ -17,7 +17,7 @@ export const getUserCommodity = async (req, res, next) => {
     );
 
     if (!category) {
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(204).json({ message: "Category not found" });
     }
 
     res.json(category);
@@ -74,17 +74,24 @@ export const addUserCommodity = async (req, res) => {
     if (!userSpotRate) {
       userSpotRate = new UserSpotRateModel({
         createdBy: adminId,
-        categories: [{ categoryId }],
+        categories: [],
       });
     }
 
     let category = userSpotRate.categories.find(
-      (cat) => cat.categoryId === categoryId
+      (cat) => cat.categoryId.toString() === categoryId
     );
-
+    // console.log("catID", categoryId);
     if (!category) {
-      category = { categoryId };
+      category = { categoryId, commodities: [] };
       userSpotRate.categories.push(category);
+    }
+    category = userSpotRate.categories.find(
+      (cat) => cat.categoryId.toString() === categoryId
+    );
+    // Ensure the commodities array exists
+    if (!category.commodities) {
+      category.commodities = [];
     }
 
     // Ensure all required fields are present
