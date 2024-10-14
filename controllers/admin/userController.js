@@ -1,4 +1,5 @@
-import { UsersModel } from "../../model/usersSchema.js";
+import mongoose from "mongoose";
+import { UsersModel } from "../../model/UsersSchema.js";
 import { decryptPassword, encryptPassword } from "../../utils/crypto.js";
 
 export const addUser = async (req, res) => {
@@ -18,52 +19,70 @@ export const addUser = async (req, res) => {
         .json({ success: false, message: "All fields are required" });
     }
 
+    // Check if user with the same contact already exists
+    const existingUser = await UsersModel.findOne({
+      createdBy: adminId,
+      "users.contact": userData.contact,
+    });
+
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "A user with this contact number already exists",
+        });
+    }
+
     // Encrypt password
     const { iv, encryptedData } = encryptPassword(userData.password);
-
-    const existingAdmin = await UsersModel.findOne({ createdBy: adminId });
 
     const newUserData = {
       ...userData,
       password: encryptedData,
-      passwordAccessKey: iv, // Store IV as passwordAccessKey
+      passwordAccessKey: iv,
     };
 
-    if (existingAdmin) {
-      // Check if the contact already exists
-      const contactExists = existingAdmin.users.some(
-        (user) => user.contact === userData.contact
-      );
-      if (contactExists) {
-        return res
-          .status(409)
-          .json({
-            success: false,
-            message: "User with this contact already exists",
-          });
-      }
+    const result = await UsersModel.findOneAndUpdate(
+      { createdBy: adminId },
+      { $push: { users: newUserData } },
+      { new: true, upsert: true }
+    );
 
-      // Add new user to existing document
-      existingAdmin.users.push(newUserData);
-      await existingAdmin.save();
-    } else {
-      // Create new document with the first user
-      const newUsers = new UsersModel({
-        createdBy: adminId,
-        users: [newUserData],
-      });
-      await newUsers.save();
-    }
+    const addedUser = result.users[result.users.length - 1];
 
-    // Don't send back the encrypted password or IV
-    const { password, passwordAccessKey, ...userDataWithoutSensitiveInfo } =
-      newUserData;
+    // Populate the category name
+    const populatedUser = await UsersModel.aggregate([
+      { $match: { "users._id": addedUser._id } },
+      { $unwind: "$users" },
+      { $match: { "users._id": addedUser._id } },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "users.categoryId",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      { $unwind: "$categoryInfo" },
+      {
+        $project: {
+          _id: "$users._id",
+          name: "$users.name",
+          contact: "$users.contact",
+          location: "$users.location",
+          categoryId: "$users.categoryId",
+          categoryName: "$categoryInfo.name",
+        },
+      },
+    ]);
+
     res
       .status(201)
       .json({
         success: true,
         message: "User added successfully",
-        user: userDataWithoutSensitiveInfo,
+        user: populatedUser[0],
       });
   } catch (error) {
     console.error("Error adding user:", error);
@@ -136,63 +155,74 @@ export const getUsers = async (req, res) => {
   try {
     const { adminId } = req.params;
 
-    const usersDoc = await UsersModel.findOne({ createdBy: adminId }).populate(
-      "users.categoryId",
-      "name"
-    );
+    // Convert adminId to ObjectId
+    const objectIdAdminId = new mongoose.Types.ObjectId(adminId);
 
-    if (!usersDoc) {
-      return res.json({ success: true, users: [] });
-    }
+    const users = await UsersModel.aggregate([
+      { $match: { createdBy: objectIdAdminId } },
+      { $unwind: "$users" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "users.categoryId",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      { $unwind: "$categoryInfo" },
+      {
+        $project: {
+          _id: "$users._id",
+          name: "$users.name",
+          contact: "$users.contact",
+          location: "$users.location",
+          categoryId: "$users.categoryId",
+          categoryName: "$categoryInfo.name",
+          encryptedPassword: "$users.password",
+          passwordAccessKey: "$users.passwordAccessKey",
+        },
+      },
+    ]);
 
-    // Decrypt passwords and format category for each user
-    const processedUsers = usersDoc.users.map((user) => {
-      const userObject = user.toObject();
+    // Decrypt passwords and remove sensitive information
+    const sanitizedUsers = users.map((user) => {
       try {
-        // Check if both password and passwordAccessKey exist
-        if (userObject.password && userObject.passwordAccessKey) {
+        if (user.encryptedPassword && user.passwordAccessKey) {
           const decryptedPassword = decryptPassword(
-            userObject.password,
-            userObject.passwordAccessKey
+            user.encryptedPassword,
+            user.passwordAccessKey
           );
-
-          // Format category information
-          const category = userObject.categoryId
-            ? {
-                id: userObject.categoryId._id,
-                name: userObject.categoryId.name,
-              }
-            : null;
-
-          // Remove the original categoryId and add the formatted category
-          const { categoryId, password, passwordAccessKey, ...restUserData } =
-            userObject;
-          return { ...restUserData, category, decryptedPassword };
+          const { encryptedPassword, passwordAccessKey, ...sanitizedUser } =
+            user;
+          return { ...sanitizedUser, decryptedPassword };
         } else {
+          const { encryptedPassword, passwordAccessKey, ...sanitizedUser } =
+            user;
           return {
-            ...userObject,
+            ...sanitizedUser,
             decryptionFailed: true,
             reason: "Missing password or passwordAccessKey",
           };
         }
       } catch (decryptionError) {
         console.error(
-          `Failed to decrypt password for user ${userObject._id}:`,
+          `Failed to decrypt password for user ${user._id}:`,
           decryptionError
         );
+        const { encryptedPassword, passwordAccessKey, ...sanitizedUser } = user;
         return {
-          ...userObject,
+          ...sanitizedUser,
           decryptionFailed: true,
-          reason: decryptionError.message,
+          reason: "Decryption error",
         };
       }
     });
 
-    res.json({ success: true, users: processedUsers });
+    res.json({ success: true, users: sanitizedUsers });
   } catch (error) {
     console.error("Error in getUsers:", error);
     res
-      .status(400)
+      .status(500)
       .json({
         success: false,
         message: "Error fetching users",
