@@ -1,12 +1,12 @@
 import macaddress from "macaddress";
 import mongoose from "mongoose";
-import DeviceModel from "../../model/deviceSchema.js";
 import {
   getNewsByAdminId,
   getSportrate,
 } from "../../helper/device/deviceHalper.js";
-import { serverModel } from "../../model/serverSchema.js";
 import adminModel from "../../model/adminSchema.js";
+import DeviceModel from "../../model/deviceSchema.js";
+import { serverModel } from "../../model/serverSchema.js";
 
 export const activateDeviceController = async (req, res) => {
   const session = await mongoose.startSession();

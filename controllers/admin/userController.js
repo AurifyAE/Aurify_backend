@@ -1,14 +1,21 @@
-import { UsersModel } from '../../model/UsersSchema.js';
-import { encryptPassword, decryptPassword } from '../../utils/crypto.js'; 
-
+import { UsersModel } from "../../model/usersSchema.js";
+import { decryptPassword, encryptPassword } from "../../utils/crypto.js";
 
 export const addUser = async (req, res) => {
   try {
     const { adminId } = req.params;
     const userData = req.body;
 
-    if (!userData.name || !userData.contact || !userData.location || !userData.category || !userData.password) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
+    if (
+      !userData.name ||
+      !userData.contact ||
+      !userData.location ||
+      !userData.categoryId ||
+      !userData.password
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
     }
 
     // Encrypt password
@@ -19,14 +26,21 @@ export const addUser = async (req, res) => {
     const newUserData = {
       ...userData,
       password: encryptedData,
-      passwordAccessKey: iv  // Store IV as passwordAccessKey
+      passwordAccessKey: iv, // Store IV as passwordAccessKey
     };
 
     if (existingAdmin) {
       // Check if the contact already exists
-      const contactExists = existingAdmin.users.some(user => user.contact === userData.contact);
+      const contactExists = existingAdmin.users.some(
+        (user) => user.contact === userData.contact
+      );
       if (contactExists) {
-        return res.status(409).json({ success: false, message: 'User with this contact already exists' });
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message: "User with this contact already exists",
+          });
       }
 
       // Add new user to existing document
@@ -36,17 +50,30 @@ export const addUser = async (req, res) => {
       // Create new document with the first user
       const newUsers = new UsersModel({
         createdBy: adminId,
-        users: [newUserData]
+        users: [newUserData],
       });
       await newUsers.save();
     }
 
     // Don't send back the encrypted password or IV
-    const { password, passwordAccessKey, ...userDataWithoutSensitiveInfo } = newUserData;
-    res.status(201).json({ success: true, message: 'User added successfully', user: userDataWithoutSensitiveInfo });
+    const { password, passwordAccessKey, ...userDataWithoutSensitiveInfo } =
+      newUserData;
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "User added successfully",
+        user: userDataWithoutSensitiveInfo,
+      });
   } catch (error) {
-    console.error('Error adding user:', error);
-    res.status(500).json({ success: false, message: 'Error adding user', error: error.message });
+    console.error("Error adding user:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error adding user",
+        error: error.message,
+      });
   }
 };
 
@@ -56,37 +83,52 @@ export const editUser = async (req, res) => {
     const updatedUserData = req.body;
 
     let updateObject = {
-      'users.$.name': updatedUserData.name,
-      'users.$.contact': updatedUserData.contact,
-      'users.$.location': updatedUserData.location,
-      'users.$.category': updatedUserData.category,
+      "users.$.name": updatedUserData.name,
+      "users.$.contact": updatedUserData.contact,
+      "users.$.location": updatedUserData.location,
+      "users.$.category": updatedUserData.category,
     };
 
     // If password is being updated, encrypt it
     if (updatedUserData.password) {
       const { iv, encryptedData } = encryptPassword(updatedUserData.password);
-      updateObject['users.$.password'] = encryptedData;
-      updateObject['users.$.passwordAccessKey'] = iv;  // Store IV as passwordAccessKey
+      updateObject["users.$.password"] = encryptedData;
+      updateObject["users.$.passwordAccessKey"] = iv; // Store IV as passwordAccessKey
     }
 
     const result = await UsersModel.findOneAndUpdate(
-      { createdBy: adminId, 'users._id': userId },
+      { createdBy: adminId, "users._id": userId },
       { $set: updateObject },
       { new: true }
     );
 
     if (!result) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    const updatedUser = result.users.find(user => user._id.toString() === userId);
-    
+    const updatedUser = result.users.find(
+      (user) => user._id.toString() === userId
+    );
+
     // Remove password and passwordAccessKey from the response
-    const { password, passwordAccessKey, ...userWithoutSensitiveInfo } = updatedUser.toObject();
-    
-    res.json({ success: true, message: 'User updated successfully', user: userWithoutSensitiveInfo });
+    const { password, passwordAccessKey, ...userWithoutSensitiveInfo } =
+      updatedUser.toObject();
+
+    res.json({
+      success: true,
+      message: "User updated successfully",
+      user: userWithoutSensitiveInfo,
+    });
   } catch (error) {
-    res.status(400).json({ success: false, message: 'Error updating user', error: error.message });
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: "Error updating user",
+        error: error.message,
+      });
   }
 };
 
@@ -94,33 +136,68 @@ export const getUsers = async (req, res) => {
   try {
     const { adminId } = req.params;
 
-    const usersDoc = await UsersModel.findOne({ createdBy: adminId });
+    const usersDoc = await UsersModel.findOne({ createdBy: adminId }).populate(
+      "users.categoryId",
+      "name"
+    );
 
     if (!usersDoc) {
       return res.json({ success: true, users: [] });
     }
 
-    // Decrypt passwords for each user
-    const usersWithDecryptedPasswords = usersDoc.users.map(user => {
+    // Decrypt passwords and format category for each user
+    const processedUsers = usersDoc.users.map((user) => {
       const userObject = user.toObject();
       try {
         // Check if both password and passwordAccessKey exist
         if (userObject.password && userObject.passwordAccessKey) {
-          const decryptedPassword = decryptPassword(userObject.password, userObject.passwordAccessKey);
-          return { ...userObject, decryptedPassword };
+          const decryptedPassword = decryptPassword(
+            userObject.password,
+            userObject.passwordAccessKey
+          );
+
+          // Format category information
+          const category = userObject.categoryId
+            ? {
+                id: userObject.categoryId._id,
+                name: userObject.categoryId.name,
+              }
+            : null;
+
+          // Remove the original categoryId and add the formatted category
+          const { categoryId, password, passwordAccessKey, ...restUserData } =
+            userObject;
+          return { ...restUserData, category, decryptedPassword };
         } else {
-          return { ...userObject, decryptionFailed: true, reason: 'Missing password or passwordAccessKey' };
+          return {
+            ...userObject,
+            decryptionFailed: true,
+            reason: "Missing password or passwordAccessKey",
+          };
         }
       } catch (decryptionError) {
-        console.error(`Failed to decrypt password for user ${userObject._id}:`, decryptionError);
-        return { ...userObject, decryptionFailed: true, reason: decryptionError.message };
+        console.error(
+          `Failed to decrypt password for user ${userObject._id}:`,
+          decryptionError
+        );
+        return {
+          ...userObject,
+          decryptionFailed: true,
+          reason: decryptionError.message,
+        };
       }
     });
 
-    res.json({ success: true, users: usersWithDecryptedPasswords });
+    res.json({ success: true, users: processedUsers });
   } catch (error) {
-    console.error('Error in getUsers:', error);
-    res.status(400).json({ success: false, message: 'Error fetching users', error: error.message });
+    console.error("Error in getUsers:", error);
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: "Error fetching users",
+        error: error.message,
+      });
   }
 };
 
@@ -135,13 +212,19 @@ export const deleteUser = async (req, res) => {
     );
 
     if (!result) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    res.json({ success: true, message: 'User deleted successfully' });
+    res.json({ success: true, message: "User deleted successfully" });
   } catch (error) {
-    res.status(400).json({ success: false, message: 'Error deleting user', error: error.message });
+    res
+      .status(400)
+      .json({
+        success: false,
+        message: "Error deleting user",
+        error: error.message,
+      });
   }
 };
-
-

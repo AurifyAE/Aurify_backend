@@ -10,6 +10,26 @@ const CategorySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  sellPremium: {
+    type: Number,
+    required: true,
+  },
+  sellCharge: {
+    type: Number,
+    required: true,
+  },
+  spread: {
+    type: Number,
+    required: true,
+  },
+  buyPremium: {
+    type: Number,
+    required: true,
+  },
+  buyCharge: {
+    type: Number,
+    required: true,
+  },
 });
 
 const CategoryModel = mongoose.model("Category", CategorySchema);

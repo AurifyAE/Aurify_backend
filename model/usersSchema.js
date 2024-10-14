@@ -20,8 +20,10 @@ const UsersSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
-      category: {
-        type: String,
+      categoryId: {
+        // Changed from category to categoryId
+        type: mongoose.Schema.Types.ObjectId, // Changed type to ObjectId
+        ref: "Category", // Assuming you have a Category model
         required: true,
       },
       password: {
