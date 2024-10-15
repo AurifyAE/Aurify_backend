@@ -158,4 +158,10 @@ router.post('/commodities/:adminId/:categoryId',addUserCommodity);
 router.delete('/commodities/:adminId/:categoryId/:commodityId',deleteUserCommodity);
 router.patch('/spotrate-commodity/:adminId/:categoryId/:commodityId', updateUserCommodity);
 
+//userDBcategory routers
+router.post('/addUserDBCategory/:adminId', addCategory);
+router.put('/editUserDBCategory/:id/:adminId', editCategory);
+router.delete('/deleteUserDBCategory/:id/:adminId', deleteCategory);
+router.get('/getUserDBCategories/:adminId', getCategories);
+
 export default router;
