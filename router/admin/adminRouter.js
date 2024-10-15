@@ -195,4 +195,10 @@ router.patch(
   updateUserCommodity
 );
 
+//userDBcategory routers
+router.post('/addUserDBCategory/:adminId', addCategory);
+router.put('/editUserDBCategory/:id/:adminId', editCategory);
+router.delete('/deleteUserDBCategory/:id/:adminId', deleteCategory);
+router.get('/getUserDBCategories/:adminId', getCategories);
+
 export default router;
