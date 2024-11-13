@@ -10,6 +10,8 @@ const adminSchema = new mongoose.Schema({
   passwordAccessKey: { type: String, required: true },
   contact: { type: String, required: true },
   whatsapp: { type: String, required: true },
+  latitude: { type: String, default: null }, // New latitude field
+  longitude: { type: String, default: null },
   userType: { type: String, required: true },
   screenLimit: { type: Number, required: true },
   solutions: [
