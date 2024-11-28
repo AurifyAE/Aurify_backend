@@ -67,9 +67,24 @@ import {
   uploadBG,
 } from "../../controllers/admin/previewController.js";
 import {
+  createProduct,
+  deleteProduct,
+  fetchProductData,
+  updateProduct,
+} from "../../controllers/admin/productController.js";
+import {
   updateAdminProfileController,
   updateLogo,
 } from "../../controllers/admin/profileController.js";
+import {
+  createMainCategory,
+  createSubCategory,
+  deleteMainCategory,
+  deleteSubCategory,
+  editMainCategory,
+  editSubCategory,
+  getMainCategories,
+} from "../../controllers/admin/shopCategoryController.js";
 import {
   addCustomSpread,
   deleteSpreadValueController,
@@ -88,7 +103,6 @@ import {
   updateUserCommodity,
   updateUserSpread,
 } from "../../controllers/admin/UserSpotRateController.js";
-import { getUserData } from "../../helper/admin/adminHelper.js";
 
 const router = Router();
 
@@ -199,10 +213,22 @@ router.patch(
   updateUserCommodity
 );
 
-//userDBcategory routers
-router.post("/addUserDBCategory/:adminId", addCategory);
-router.put("/editUserDBCategory/:id/:adminId", editCategory);
-router.delete("/deleteUserDBCategory/:id/:adminId", deleteCategory);
-router.get("/getUserDBCategories/:adminId", getCategories);
+router.post("/main-category", uploadSingle("image"), createMainCategory);
+router.put(
+  "/main-category/:categoryId",
+  uploadSingle("image"),
+  editMainCategory
+);
+router.delete("/main-category/:categoryId", deleteMainCategory);
+router.get("/main-categories/:adminId", getMainCategories);
+
+router.post("/sub-category", createSubCategory);
+router.put("/sub-category/:subCategoryId", editSubCategory);
+router.delete("/sub-category/:subCategoryId", deleteSubCategory);
+
+router.get("/products/:adminId", fetchProductData);
+router.post("/products", uploadMultiple("image", 5), createProduct);
+router.put("/products/:id", uploadMultiple("image", 5), updateProduct);
+router.delete("/products/:id", deleteProduct);
 
 export default router;
