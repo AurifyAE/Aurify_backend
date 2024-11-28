@@ -1,4 +1,4 @@
-import { UsersModel } from "../../model/UsersSchema.js";
+import { UsersModel } from "../../model/usersSchema.js";
 import { decryptPassword, encryptPassword } from "../../utils/crypto.js";
 
 export const addUser = async (req, res) => {
