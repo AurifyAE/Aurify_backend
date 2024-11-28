@@ -1,12 +1,11 @@
 import mongoose from "mongoose";
-import { UsersModel } from "../../model/UsersSchema.js";
+import { UsersModel } from "../../model/usersSchema.js";
 import { decryptPassword, encryptPassword } from "../../utils/crypto.js";
 
 export const addUser = async (req, res) => {
   try {
     const { adminId } = req.params;
     const userData = req.body;
-
     if (
       !userData.name ||
       !userData.contact ||

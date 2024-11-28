@@ -35,12 +35,10 @@ export const addUser = async (req, res) => {
         (user) => user.contact === userData.contact
       );
       if (contactExists) {
-        return res
-          .status(409)
-          .json({
-            success: false,
-            message: "User with this contact already exists",
-          });
+        return res.status(409).json({
+          success: false,
+          message: "User with this contact already exists",
+        });
       }
 
       // Add new user to existing document
@@ -58,22 +56,18 @@ export const addUser = async (req, res) => {
     // Don't send back the encrypted password or IV
     const { password, passwordAccessKey, ...userDataWithoutSensitiveInfo } =
       newUserData;
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "User added successfully",
-        user: userDataWithoutSensitiveInfo,
-      });
+    res.status(201).json({
+      success: true,
+      message: "User added successfully",
+      user: userDataWithoutSensitiveInfo,
+    });
   } catch (error) {
     console.error("Error adding user:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error adding user",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error adding user",
+      error: error.message,
+    });
   }
 };
 
@@ -122,13 +116,11 @@ export const editUser = async (req, res) => {
       user: userWithoutSensitiveInfo,
     });
   } catch (error) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: "Error updating user",
-        error: error.message,
-      });
+    res.status(400).json({
+      success: false,
+      message: "Error updating user",
+      error: error.message,
+    });
   }
 };
 
@@ -181,13 +173,11 @@ export const getUsers = async (req, res) => {
     res.json({ success: true, users: usersWithDecryptedPasswords });
   } catch (error) {
     console.error("Error in getUsers:", error);
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: "Error fetching users",
-        error: error.message,
-      });
+    res.status(400).json({
+      success: false,
+      message: "Error fetching users",
+      error: error.message,
+    });
   }
 };
 
@@ -209,12 +199,10 @@ export const deleteUser = async (req, res) => {
 
     res.json({ success: true, message: "User deleted successfully" });
   } catch (error) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        message: "Error deleting user",
-        error: error.message,
-      });
+    res.status(400).json({
+      success: false,
+      message: "Error deleting user",
+      error: error.message,
+    });
   }
 };

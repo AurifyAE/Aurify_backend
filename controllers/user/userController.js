@@ -1,56 +1,118 @@
+import mongoose from "mongoose";
 import {
   getNewsByAdminId,
   getSportrate,
   requestPassInAdmin,
   updateUserPassword,
-  userCollectionSave,
   userUpdateSpread,
-  userVerfication,
+  userVerification,
+  getAdminProfile,
 } from "../../helper/user/userHelper.js";
 import adminModel from "../../model/adminSchema.js";
 import DiscountModel from "../../model/discountSchema.js";
 import PremiumModel from "../../model/premiumSchema.js";
 import { serverModel } from "../../model/serverSchema.js";
-
-export const registerUser = async (req, res, next) => {
-  try {
-    const { userName, contact, location, email, password } = req.body;
-    const { adminId } = req.params;
-    const data = {
-      userName,
-      contact,
-      location,
-      email,
-      password,
-    };
-
-    const response = await userCollectionSave(data, adminId);
-    res
-      .status(200)
-      .json({ message: response.message, success: response.success });
-  } catch (error) {
-    next(error);
-  }
-};
+import { UserSpotRateModel } from "../../model/UserSpotRateSchema.js";
+import { UsersModel } from "../../model/usersSchema.js";
 
 export const userLoginController = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { contact, password } = req.body;
     const { adminId } = req.params;
-    const response = await userVerfication(adminId, email, password);
-    res
-      .status(200)
-      .json({ message: response.message, success: response.success });
+    //  Verify user credentials
+    const response = await userVerification(adminId, contact, password);
+    if (response.success) {
+      const userId = response.userId;
+      //  Fetch user data, including the category name
+      const user = await UsersModel.aggregate([
+        { $match: { "users._id": new mongoose.Types.ObjectId(userId) } },
+        { $unwind: "$users" },
+        { $match: { "users._id": new mongoose.Types.ObjectId(userId) } },
+        {
+          $lookup: {
+            from: "categories", // This should be the name of your categories collection
+            localField: "users.categoryId",
+            foreignField: "_id",
+            as: "categoryDetails",
+          },
+        },
+        { $unwind: "$categoryDetails" },
+        {
+          $addFields: {
+            "users.categoryName": "$categoryDetails.name", // Add category name to users object
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            createdBy: 1,
+            users: 1,
+          },
+        },
+      ]);
+
+      // Check if user is found
+      if (!user || user.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "User not found", success: false });
+      }
+
+      const userDetails = user[0].users;
+
+      //  Fetch user spot rate based on the user's category and adminId
+      const userSpotRate = await UserSpotRateModel.findOne(
+        {
+          createdBy: adminId,
+          "categories.categoryId": userDetails.categoryId,
+        },
+        {
+          "categories.$": 1,
+        }
+      );
+      // Check if user spot rate is found
+      if (!userSpotRate || !userSpotRate.categories.length) {
+        return res
+          .status(404)
+          .json({ message: "User spot rate not found", success: false });
+      }
+      // Access the matched category details
+      const matchedCategory = userSpotRate.categories[0];
+
+      //  Respond with the fetched data
+      res.status(200).json({
+        message: response.message,
+        success: response.success,
+        userId: response.userId,
+        userDetails: userDetails,
+        userSpotRate: matchedCategory,
+      });
+    } else {
+      res.status(401).json({ message: "Login failed", success: false });
+    }
   } catch (error) {
     next(error);
   }
 };
 
+export const getProfile = async (req, res, next) => {
+  try {
+    const { adminId } = req.params;
+    const response = await getAdminProfile(adminId);
+    res.status(200).json({
+      message: response.message,
+      success: response.success,
+      info: response.data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 export const forgotPassword = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { contact, password } = req.body;
     const { adminId } = req.params;
-    const response = await updateUserPassword(adminId, email, password);
+    const response = await updateUserPassword(adminId, contact, password);
     res
       .status(200)
       .json({ message: response.message, success: response.success });
@@ -97,7 +159,7 @@ export const fetchAdminBankDetails = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      commodities: adminData,
+      bankInfo: adminData,
       message: "Fetch banking details successfully",
     });
   } catch (error) {

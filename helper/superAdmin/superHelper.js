@@ -1,7 +1,7 @@
-import bcrypt from "bcrypt";
 import adminModel from "../../model/adminSchema.js";
-import DeviceModel from "../../model/deviceSchema.js";
+import bcrypt from "bcrypt";
 import { decryptPassword, encryptPassword } from "../../utils/crypto.js";
+import DeviceModel from "../../model/deviceSchema.js";
 
 // Function to hash the password
 const hashPassword = async (password) => {
@@ -16,6 +16,7 @@ export const userCollectionSave = async (userData) => {
   try {
     const {
       userName,
+      companyName,
       logo,
       address,
       email,
@@ -66,6 +67,7 @@ export const userCollectionSave = async (userData) => {
 
     const authCollection = new adminModel({
       userName,
+      companyName,
       logo,
       address,
       email,
@@ -199,6 +201,7 @@ export const deviceStatusChange = async (adminId, deviceId) => {
   }
 };
 
+
 export const deleteDeviceMacAddress = async (adminId, deviceId) => {
   try {
     const deviceDoc = await DeviceModel.findOne({
@@ -210,18 +213,19 @@ export const deleteDeviceMacAddress = async (adminId, deviceId) => {
       return { status: false, message: "Device not found" };
     }
 
+    
     const result = await DeviceModel.updateOne(
-      { adminId: adminId, "devices._id": deviceId },
+      { adminId: adminId, 'devices._id': deviceId },
       { $pull: { devices: { _id: deviceId } } } // Remove the device from the devices array
     );
 
     if (result.nModified === 0) {
-      return { status: false, message: "Device not found or not deleted" };
+      return { status: false, message: 'Device not found or not deleted' };
     }
 
     return {
       status: true,
-      message: "Device deleted successfully",
+      message: 'Device deleted successfully',
     };
   } catch (error) {
     throw new Error(`Error deleting device: ${error.message}`);

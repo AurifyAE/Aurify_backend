@@ -37,6 +37,12 @@ import {
 } from "../../controllers/admin/spotRateController.js";
 import { uploadSingle } from "../../middleware/multer.js";
 
+// import {
+//   createShopItem,
+//   fetchShopItems,
+//   editShopItem,
+//   removeShopItem,
+// } from "../../controllers/admin/shopController.js";
 import {
   addCategory,
   deleteCategory,
@@ -64,12 +70,6 @@ import {
   updateAdminProfileController,
   updateLogo,
 } from "../../controllers/admin/profileController.js";
-import {
-  createShopItem,
-  editShopItem,
-  fetchShopItems,
-  removeShopItem,
-} from "../../controllers/admin/shopController.js";
 import {
   addCustomSpread,
   deleteSpreadValueController,
@@ -149,10 +149,10 @@ router.delete(
 );
 
 //shop router
-router.post("/shop-items/:userName", uploadSingle("image"), createShopItem);
-router.get("/shop-items/:userName", fetchShopItems);
-router.patch("/shop-items/:id", uploadSingle("image"), editShopItem);
-router.delete("/shop-items/:id", removeShopItem);
+// router.post('/shop-items/:userName', uploadSingle('image'), createShopItem);
+// router.get('/shop-items/:userName', fetchShopItems);
+// router.patch('/shop-items/:id', uploadSingle('image'), editShopItem);
+// router.delete('/shop-items/:id', removeShopItem);
 
 //contact router
 router.post("/contact", sendContactEmail);
@@ -181,6 +181,10 @@ router.post("/admin/:adminId/users", addUser);
 router.put("/admin/users/:userId/:adminId", editUser);
 router.delete("/admin/users/:userId/:adminId", deleteUser);
 router.get("/admin/:adminId/users", getUsers);
+router.post("/admin/:adminId/users", addUser);
+router.put("/admin/users/:userId/:adminId", editUser);
+router.delete("/admin/users/:userId/:adminId", deleteUser);
+router.get("/admin/:adminId/users", getUsers);
 
 //user spotrate router
 router.get("/spotrates/:adminId/:categoryId", getUserCommodity);
@@ -196,9 +200,9 @@ router.patch(
 );
 
 //userDBcategory routers
-router.post('/addUserDBCategory/:adminId', addCategory);
-router.put('/editUserDBCategory/:id/:adminId', editCategory);
-router.delete('/deleteUserDBCategory/:id/:adminId', deleteCategory);
-router.get('/getUserDBCategories/:adminId', getCategories);
+router.post("/addUserDBCategory/:adminId", addCategory);
+router.put("/editUserDBCategory/:id/:adminId", editCategory);
+router.delete("/deleteUserDBCategory/:id/:adminId", deleteCategory);
+router.get("/getUserDBCategories/:adminId", getCategories);
 
 export default router;
