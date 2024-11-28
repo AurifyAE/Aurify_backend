@@ -35,7 +35,7 @@ import {
   updateCommodity,
   updateSpread,
 } from "../../controllers/admin/spotRateController.js";
-import { uploadSingle } from "../../middleware/multer.js";
+import { uploadMultiple, uploadSingle } from "../../middleware/multer.js";
 
 // import {
 //   createShopItem,
@@ -103,6 +103,7 @@ import {
   updateUserCommodity,
   updateUserSpread,
 } from "../../controllers/admin/UserSpotRateController.js";
+import { getUserData } from "../../helper/admin/adminHelper.js";
 
 const router = Router();
 
@@ -212,6 +213,12 @@ router.patch(
   "/spotrate-commodity/:adminId/:categoryId/:commodityId",
   updateUserCommodity
 );
+
+//userDBcategory routers
+router.post("/addUserDBCategory/:adminId", addCategory);
+router.put("/editUserDBCategory/:id/:adminId", editCategory);
+router.delete("/deleteUserDBCategory/:id/:adminId", deleteCategory);
+router.get("/getUserDBCategories/:adminId", getCategories);
 
 router.post("/main-category", uploadSingle("image"), createMainCategory);
 router.put(

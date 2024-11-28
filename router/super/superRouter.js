@@ -1,22 +1,5 @@
 import { Router } from "express";
 import {
-  editAdmin,
-  registerAdmin,
-  getAdmin,
-  fetchDeviceAdmin,
-  fetchDevice,
-  changeDeviceStatus,
-  deleteDevice,
-} from "../../controllers/super/superAdminController.js";
-import { uploadSingle ,uploadMultiple } from "../../middleware/multer.js";
-import {
-  addServer,
-  updateSelectedServer,
-  deleteSelectedServer,
-  editServer,
-  fetchServerData,
-} from "../../controllers/super/serverController.js";
-import {
   addBanner,
   deleteBanner,
   editBannerDetails,
@@ -38,6 +21,23 @@ import {
   fetchProductData,
   updateProduct,
 } from "../../controllers/super/productController.js";
+import {
+  addServer,
+  deleteSelectedServer,
+  editServer,
+  fetchServerData,
+  updateSelectedServer,
+} from "../../controllers/super/serverController.js";
+import {
+  changeDeviceStatus,
+  deleteDevice,
+  editAdmin,
+  fetchDevice,
+  fetchDeviceAdmin,
+  getAdmin,
+  registerAdmin,
+} from "../../controllers/super/superAdminController.js";
+import { uploadMultiple, uploadSingle } from "../../middleware/multer.js";
 const router = Router();
 
 router.post("/register", uploadSingle("logo"), registerAdmin);
@@ -61,7 +61,7 @@ router.delete("/banners/:bannerId/:adminId", deleteBanner);
 router.put("/banners/:bannerId", uploadSingle("image"), editBannerDetails);
 router.get("/get-banners", fetchBanners);
 
-
+//Main category routes
 router.post("/main-category", uploadSingle("image"), createMainCategory);
 router.put(
   "/main-category/:categoryId",
@@ -69,13 +69,16 @@ router.put(
   editMainCategory
 );
 router.delete("/main-category/:categoryId", deleteMainCategory);
+
+//Sub category routes
 router.post("/sub-category", createSubCategory);
 router.put("/sub-category/:subCategoryId", editSubCategory);
 router.delete("/sub-category/:subCategoryId", deleteSubCategory);
 router.get("/main-categories", getMainCategories);
 
-router.get("/get-product/:mainCateId",fetchProductData);
-router.post("/products",uploadMultiple('image',5), createProduct);
-router.put("/products/:id",uploadMultiple('image',5), updateProduct);
+//Product routes
+router.get("/get-product/:mainCateId", fetchProductData);
+router.post("/products", uploadMultiple("image", 5), createProduct);
+router.put("/products/:id", uploadMultiple("image", 5), updateProduct);
 router.delete("/products/:id", deleteProduct);
 export default router;
