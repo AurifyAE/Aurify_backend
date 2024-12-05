@@ -55,7 +55,6 @@ import { createAppError } from "../../utils/errorHandler.js";
     }
   };
   
-  
   // Delete product (soft delete)
   export const deleteProduct = async (req, res, next) => {
     try {
@@ -66,7 +65,6 @@ import { createAppError } from "../../utils/errorHandler.js";
       next(error);
     }
   };
-
 
   export const fetchProductData = async (req, res, next) => {
     try {
