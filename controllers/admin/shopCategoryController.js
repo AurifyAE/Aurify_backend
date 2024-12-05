@@ -6,10 +6,7 @@ import {
     editSubCategoryHelper,
     deleteSubCategoryHelper,
     getMainCategoriesHelper,
-<<<<<<< HEAD
-=======
     getAllMainCategoriesHelper,
->>>>>>> 3db28282f684bc347ac47548e4ef2f15425350da
     getSubCategoriesHelper
   } from "../../helper/admin/categoryHelper.js"
   

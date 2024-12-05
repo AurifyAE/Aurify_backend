@@ -104,7 +104,9 @@ import {
   editMainCategory,
   editSubCategory,
   getMainCategories,
-  getSubCategories
+  getSubCategories,
+  getAllMainCategories,
+
 } from "../../controllers/admin/shopCategoryController.js";
 import {
   createProduct,
